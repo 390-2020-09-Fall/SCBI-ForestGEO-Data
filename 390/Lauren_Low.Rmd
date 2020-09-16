@@ -16,23 +16,25 @@ library(fpp3)
 ```
 
 ```{r loading csv and creating census table}
-urlfile = "https://raw.githubusercontent.com/390-2020-09-Fall/SCBI-ForestGEO-Data/master/tree_main_census/data/census-csv-files/scbi.stem1.csv"
-census <- read_csv(url(urlfile))
+urlfile1 = "https://raw.githubusercontent.com/390-2020-09-Fall/SCBI-ForestGEO-Data/master/tree_main_census/data/census-csv-files/scbi.stem1.csv"
+urlfile2 = "https://raw.githubusercontent.com/390-2020-09-Fall/SCBI-ForestGEO-Data/master/tree_main_census/data/census-csv-files/scbi.stem2.csv"
+urlfile3 = "https://raw.githubusercontent.com/390-2020-09-Fall/SCBI-ForestGEO-Data/master/tree_main_census/data/census-csv-files/scbi.stem3.csv"
+
+stem1 <- read_csv(url(urlfile1))
+stem2 <- read_csv(url(urlfile2))
+# stem3 <- read_csv(url(urlfile3))
+
+stems <- rbind(stem1, stem2)
 ```
 
 ```{r cleaning up/wrangling tree census data}
-census_time <- census %>%
-  na.omit(census) %>%
-  mutate(
-    date = as_date(date),
-    month = floor_date(date, unit = "month"),
-    yearmonth = yearmonth(month)) %>% 
-  group_by(yearmonth) %>%
-  summarize(avg_dbh = mean(dbh)) %>%
-  as_tsibble(index = yearmonth) 
+ stems <- stems %>%
+  na.omit(stems) %>%
+  mutate(as.numeric(dbh))
 ```
 
 ```{r plotting avg_dbh over time}
-dbh_time_plot <- census_time %>% autoplot(avg_dbh)
-dbh_time_plot
+ggplot(data = stems, aes(dbh)) +
+  geom_histogram() +
+  facet_wrap(~CensusID)
 ```
