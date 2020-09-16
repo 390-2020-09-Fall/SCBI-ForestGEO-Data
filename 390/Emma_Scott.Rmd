@@ -38,14 +38,34 @@ stem <- rbind(stem1, stem2, stem3) %>%
                                    CensusID == 3 ~ "2018")
          ) %>% 
   dplyr::filter(dbh > 0)
+
+# Join stem and spp tables
+stem_spp <- left_join(stem, spptable, by = "sp")
 ```
 
-```{r visualization}
-dbh_viz <- ggplot(stem, aes(x = dbh, color = Census)) +
+```{r dbh facet viz}
+dbh_facet_viz <- ggplot(stem_spp, aes(x = dbh)) +
+  geom_histogram(position = "identity", binwidth = 125) +
+  xlab("Diameter at Breast Height (DBH)") +
+  ylab("Count") +
+  ggtitle("Distribution of DBH at SCBI-ForestGeo site across census years") + 
+  facet_wrap(~Census)
+dbh_facet_viz
+```
+
+```{r dbh overlay viz}
+dbh_overlay_viz <- ggplot(stem_spp, aes(x = dbh, color = Census)) +
   geom_freqpoly(position = "identity", binwidth = 125) +
   xlab("Diameter at Breast Height (DBH)") +
   ylab("Count") +
   ggtitle("Distribution of DBH at SCBI-ForestGeo site across census years")
-dbh_viz
+dbh_overlay_viz
+```
+```{r, dbh + genus facet viz}
+dbh_genus_viz <- dbh_viz + 
+  facet_wrap(~Genus) +
+  ggtitle("Distribution of DBH at SCBI-ForestGeo site across census years by genus")
+  
+dbh_genus_viz
 ```
 
