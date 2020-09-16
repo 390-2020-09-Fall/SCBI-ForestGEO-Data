@@ -17,7 +17,13 @@ See in each scbi_stem data to see which trees are the least and most for
 ```{r}
 #libaries
 library(dplyr)
-
+library(tidyverse)
+library(tsibble)
+library(lubridate)
+library(fpp3)
+library(fpp2)
+library(ggfortify)
+library(lubridate)
 ```
 
 ```{r}
@@ -26,6 +32,9 @@ library(dplyr)
 
 scbi_stem3_notalive <- scbi_stem3 %>%
   filter(DFstatus != "alive") 
+
+scbi_stem3_alive <- scbi_stem3  %>%
+  filter(DFstatus != "stem dead" & DFstatus != "broken below" & DFstatus != "prior" & DFstatus != "missing"& DFstatus != "NULL") 
 
 count_stemdead <- scbi_stem3_notalive %>%
   filter(DFstatus == "stem dead") %>%
@@ -77,7 +86,10 @@ count_brokenbelow_2018 <- count_brokenbelow[order(count_brokenbelow$n),]
 #do same as above but for scbi_stem data 2 (year 2013)
 #filtered out  df status prior and missing
 scbi_stem2_notalive <- scbi_stem2 %>%
-  filter(DFstatus != "alive" & DFstatus != "prior" & DFstatus != "missing") 
+  filter(DFstatus != "alive" & DFstatus != "prior" & DFstatus != "missing" & DFstatus != "NULL") 
+
+scbi_stem2_alive <- scbi_stem2  %>%
+  filter(DFstatus != "stem dead" & DFstatus != "broken below" & DFstatus != "prior" & DFstatus != "missing") 
 
 count_stemdead_2 <- scbi_stem2_notalive %>%
   filter(DFstatus == "stem dead") %>%
@@ -126,7 +138,10 @@ count_brokenbelow2_2013 <- count_brokenbelow_2[order(-count_brokenbelow_2$n),]
 #do same as above but for scbi_stem data 1 (year 2008)
 #filtered out  df status prior and missing
 scbi_stem1_notalive <- scbi_stem1 %>%
-  filter(DFstatus != "alive" & DFstatus != "prior" & DFstatus != "missing") 
+  filter(DFstatus != "alive" & DFstatus != "prior" & DFstatus != "missing" & DFstatus != "NULL") 
+
+scbi_stem1_alive <- scbi_stem1  %>%
+  filter(DFstatus != "stem dead" & DFstatus != "broken below" & DFstatus != "prior" & DFstatus != "missing") 
 
 count_stemdead_1 <- scbi_stem1_notalive %>%
   filter(DFstatus == "stem dead") %>%
@@ -182,6 +197,122 @@ count_brokenbelow1_2008 <- count_brokenbelow_1[order(-count_brokenbelow_1$n),]
 ```
 ______________________________________________________________________________________
 ```{r}
+#thought id filter for just the above trees but i guess it's good to leave the rest of the tree species here to see how they hold up in comparison with them too
+
+new_scbi_stem1_notalive <- scbi_stem1_notalive %>% 
+    filter(sp %in% c("libe")) 
+#  filter(StemTag %in% c(1,2)) %>%
+  
+
+new_scbi_stem1_notalive <-new_scbi_stem1_notalive[duplicated(new_scbi_stem1_notalive$tag), ]
+new_scbi_stem1_notalive <-new_scbi_stem1_notalive[duplicated(new_scbi_stem1_notalive$treeID), ]
+
+new_scbi_stem1_notalive <- new_scbi_stem1_notalive[order(as.Date(new_scbi_stem1_notalive$ExactDate, format="%m/%d/%Y")),]
+
+
+#summarise(group_by(new_scbi_stem1_notalive,sp),length(sp))
+
+new_scbi_stem1_alive <-scbi_stem1_alive %>%
+  filter(sp %in% c("libe")) %>%
+#  filter(StemTag %in% c(1,2)) %>%
+  filter(quadrat <=300 | quadrat >= 1000 ) %>%
+  filter(treeID <= 300)
+new_scbi_stem1_alive <-new_scbi_stem1_alive[duplicated(new_scbi_stem1_alive$tag), ]
+new_scbi_stem1_alive <-new_scbi_stem1_alive[duplicated(new_scbi_stem1_alive$treeID), ]
+
+new_scbi_stem1_alive <- new_scbi_stem1_alive[order(as.Date(new_scbi_stem1_alive$ExactDate, format="%m/%d/%Y")),]
+
+#summarise(group_by(new_scbi_stem1_alive,sp),length(sp))
+
+new_scbi_stem2_notalive <- scbi_stem2_notalive %>% 
+    filter(sp %in% c("libe")) %>%
+    filter (!dbh == 0)
+ #   filter(StemTag %in% c(1,2)) %>%
+
+
+
+new_scbi_stem2_alive <-scbi_stem2_alive %>%
+  filter(sp %in% c( "libe")) %>%
+ # filter(StemTag %in% c(1,2)) %>%
+  filter(quadrat <=300 | quadrat >= 1000) %>%
+  filter(treeID <= 300)
+
+
+new_scbi_stem2_alive <-new_scbi_stem2_alive[duplicated(new_scbi_stem2_alive$tag), ]
+new_scbi_stem2_alive <-new_scbi_stem2_alive[duplicated(new_scbi_stem2_alive$treeID), ]
+
+new_scbi_stem2_alive <- new_scbi_stem2_alive[order(as.Date(new_scbi_stem2_alive$ExactDate, format="%m/%d/%Y")),]
+
+new_scbi_stem3_notalive <- scbi_stem3_notalive %>% 
+    filter(sp %in% c("libe")) %>%
+  filter(DFstatus != "alive" & DFstatus != "prior" & DFstatus != "missing" & dbh != "NULL") 
+
+ # filter(StemTag %in% c(1,2)) %>%
+
+
+new_scbi_stem3_alive <-scbi_stem3_alive %>%
+  filter(sp %in% c( "libe")) %>%
+  filter(StemTag %in% c(1,2)) %>%
+  filter(quadrat <=2000)
+#new_scbi_stem3_alive <-new_scbi_stem3_alive[!duplicated(new_scbi_stem3_alive$tag), ]
+```
+
+```{r}
+#bind the alive and not alive data together 
+##
+total_alive <- rbind(new_scbi_stem1_alive, new_scbi_stem2_alive) %>% select("sp", "quadrat", "dbh", "ExactDate","date","quadrat", "treeID", "StemTag", "tag", "MeasureID") %>%
+  filter(!dbh %in% c(0, "NULL"))  %>%
+  filter(StemTag != 10) %>%
+  group_by(treeID, StemTag) %>%
+  filter(n() >= 2 ) 
+#I want tree ID and StemTag frequency to be more than just one for ST and 3 for treeID
+
+   #filter(!treeID %in% c(3,13,14,15,18,35,40,42,53,56,58,67,68,87,105,110,189,191,200,201,209,213,214,219,222,230,234,236,251,253,258,259,260,262,269,272,274,276,280,281,282,287,288,289,290,297))
+
+as.data.frame((table(total_alive$treeID))) 
+as.data.frame((table(total_alive$StemTag)))
+
+total_alive %>% group_by(treeID, StemTag) %>% summarize(freq = n()) %>%
+  filter(freq >= 2)
+
+# total_alive <-total_alive[duplicated(treeID$StemTag), ] %>%
+#   filter(tag != 20001)
+
+total_notalive <- rbind(new_scbi_stem2_notalive, new_scbi_stem1_notalive, new_scbi_stem3_notalive) %>% select("sp", "dbh", "ExactDate", "quadrat", "date", "treeID", "StemTag", "tag", "MeasureID") %>%
+  filter(!dbh %in% c(0, "NULL")) 
 
 ```
 
+```{r}
+ggplot(total_alive) + 
+  geom_line(aes(x=date, y=dbh, group = interaction(treeID, StemTag, quadrat), color = quadrat)) + facet_wrap(~quadrat)
+
+
+
+#+
+  #geom_text(data = subset(new_scbi_stem1_notalive, ExactDate== "12/18/2008"), aes(label = quadrat, x = ExactDate, y = dbh))
+
+
+```
+```{r}
+ggplot(new_scbi_stem1_notalive) + 
+  geom_point(aes(x=date, y=dbh, group = treeID, color = quadrat))
+```
+```{r}
+ggplot(new_scbi_stem2_notalive) + 
+  geom_point(aes(x=date, y=dbh, group = treeID, color = quadrat))
+```
+
+
+```{r}
+ggplot(new_scbi_stem3_notalive) + 
+  geom_point(aes(x=date, y=dbh, group = treeID, color = quadrat)) 
+```
+
+Honestly, this looked way better in my head. I chose to just focus on libe and see if libes placed in different quadrants would impact its growth or if they were more likely to die there (and when), considering tree ID and Stem Tag so that I can differentiate them from like a libe with the same StemTag but different TreeID to match with data from the later years with HOPEFULLY the same tree.  I chose qudrants from the lowest to the highest and not considering anything in between because the lines were getting too intense for the alive libe trees and I thought it'd be a good contrast to see clearly.
+Maybe from this we can find average dbh of libes dead and in which quadrat that this mostly likely happens in. Maybe you can also find how the seasons affect this too. 
+Like maybe libe in a certain quadrat do well in one season but not so much in another
+
+The above r code, I didn't really use all of them I think. I had an idea and then I started running them then realized problems and then my idea completely changed 360 problem after problem and then I ended up here. 
+
+Also, weird. I'm looking at the first graph and some of the dbh went down. In what case would that happen? Like a tree can grow smaller? I also checked to see if it was a r code mistake but I'm looking at treeID 263 and StemTag 9 and it does go down over the years by .6
