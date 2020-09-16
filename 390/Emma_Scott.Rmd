@@ -9,22 +9,24 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r}
+# Load libraries
+library(tidyverse)
+library(tsibble)
+library(lubridate)
+library(fpp3)
+library(here)
+library(fgeo)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+# Load data
+spptable <- here::here("tree_main_census/data/census-csv-files/scbi.spptable.csv") %>% 
+  read_csv()
+stem1 <- here::here("tree_main_census/data/census-csv-files/scbi.stem1.csv") %>% 
+  read_csv()
+stem2 <- here::here("tree_main_census/data/census-csv-files/scbi.stem2.csv") %>% 
+  read_csv()
+stem3 <- here::here("tree_main_census/data/census-csv-files/scbi.stem3.csv") %>% 
+  read_csv()
+treecoord <- here::here("tree_main_census/data/census-csv-files/tree_coord_local_and_plot_level.csv") %>% 
+  read_csv()
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
