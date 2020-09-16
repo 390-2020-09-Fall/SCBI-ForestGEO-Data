@@ -7,13 +7,13 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
-```{r}
 # Load libraries
 library(tidyverse)
 library(here)
+```
 
+```{r data wrangling}
 # Load data
 spptable <- here::here("tree_main_census/data/census-csv-files/scbi.spptable.csv") %>% 
   read_csv()
@@ -32,13 +32,20 @@ treecoord <- here::here("tree_main_census/data/census-csv-files/tree_coord_local
 stem <- rbind(stem1, stem2, stem3) %>% 
   drop_na(dbh) %>% 
   mutate(dbh = as.numeric(dbh),
-         CensusID = as.factor(CensusID)) %>% 
-  dplyr::filter(dbh > 0) 
+         CensusID = as.factor(CensusID),
+         Census = case_when(CensusID == 1 ~ "2008-2010",
+                                   CensusID == 2 ~ "2013",
+                                   CensusID == 3 ~ "2018")
+         ) %>% 
+  dplyr::filter(dbh > 0)
 ```
 
-```{r}
-viz <- ggplot(stem, aes(x = dbh, color = CensusID)) +
-  geom_freqpoly(position = "identity", binwidth = 125)
-viz
+```{r visualization}
+dbh_viz <- ggplot(stem, aes(x = dbh, color = Census)) +
+  geom_freqpoly(position = "identity", binwidth = 125) +
+  xlab("Diameter at Breast Height (DBH)") +
+  ylab("Count") +
+  ggtitle("Distribution of DBH at SCBI-ForestGeo site across census years")
+dbh_viz
 ```
 
