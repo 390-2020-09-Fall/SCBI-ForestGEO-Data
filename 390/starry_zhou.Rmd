@@ -1,0 +1,49 @@
+---
+title: "MP2_EDA"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+stem1 <- read_csv("../tree_main_census/data/census-csv-files/scbi.stem1.csv")
+stem2 <- read_csv("../tree_main_census/data/census-csv-files/scbi.stem2.csv")
+stem3 <- read_csv("../tree_main_census/data/census-csv-files/scbi.stem3.csv")
+spptable <- read_csv("../tree_main_census/data/census-csv-files/scbi.spptable.csv")
+```
+
+```{r}
+full <- rbind(stem1, stem2, stem3) %>%
+  mutate(ExactDate = lubridate::mdy(ExactDate),
+         DFstatus = as.factor(DFstatus),
+         dbh = as.numeric(dbh))
+
+alive <- full %>% 
+  filter(DFstatus == "alive")
+
+other <- full %>% 
+  filter(DFstatus != "alive")
+```
+
+```{r}
+alive %>% ggplot(aes(dbh)) +
+  geom_histogram() +
+  facet_wrap(~CensusID) +
+  labs(x = "dbh", y = "number of trees", 
+       title = "Histogram of tree heights", 
+       subtitle = "(for alive trees only)")
+
+other %>% ggplot(aes(dbh)) +
+  geom_histogram() +
+  facet_wrap(~CensusID) +
+  labs(x = "dbh", y = "number of trees", 
+       title = "Histogram of tree heights", 
+       subtitle = "(for non-alive trees)")
+```

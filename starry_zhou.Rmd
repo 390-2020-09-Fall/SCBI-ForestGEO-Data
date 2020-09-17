@@ -1,0 +1,15 @@
+---
+title: "starry_zhou"
+output: html_document
+---
+
+```{r}
+library(readr)
+
+AGB <- read_csv("summary_data/AGB_total_and_by_species.csv")
+
+ANPP <- read_csv("summary_data/ANPP_total_and_by_species.csv")
+
+ANPP_without <- read_csv("summary_data/ANPP_total_and_by_species_without_recruitment.csv")
+```
+
