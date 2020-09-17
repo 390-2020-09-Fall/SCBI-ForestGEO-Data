@@ -1,0 +1,41 @@
+---
+title: "MP2 Viz"
+author: "Serena Li"
+date: "9/15/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tsibble)
+library(lubridate)
+library(fpp3)
+library(dplyr)
+library(readr)
+```
+
+```{r}
+stem <- read.csv("scbi.stem1.csv")
+```
+
+```{r}
+avg_dbh<-stem %>% 
+  filter(!is.na(dbh),!is.na(sp)) %>% 
+  mutate(dbh_num=as.numeric(as.character(dbh))) %>% 
+  group_by(sp) %>% 
+  mutate(count=n(),
+           avg_dbh=sum(dbh_num/count))
+View(avg_dbh)
+```
+
+```{r}
+ggplot(avg_dbh,aes(x = factor(sp), y=avg_dbh)) +
+  geom_bar(stat='identity',
+           position=position_dodge())+coord_flip()
+```
+
+
