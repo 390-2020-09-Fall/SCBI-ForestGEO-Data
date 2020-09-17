@@ -1,0 +1,44 @@
+---
+title: "mp2-visualization"
+author: "Phuong Chau"
+date: "9/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries
+```{r, echo = FALSE, warning=FALSE}
+library(readr)
+library(tidyverse)
+library(dplyr)
+```
+
+```{r, echo = FALSE, warning=FALSE}
+# Load data and remove NA values
+stem1 <- read_csv("C:/Fall2020_Lastsemester/EcologicalFocasting/SCBI-ForestGEO-Data/tree_main_census/data/census-csv-files/scbi.stem1.csv")
+stem1 <- na.omit(stem1)
+stem2 <- read_csv("C:/Fall2020_Lastsemester/EcologicalFocasting/SCBI-ForestGEO-Data/tree_main_census/data/census-csv-files/scbi.stem2.csv")
+stem2 <- na.omit(stem2)
+stem3 <- read_csv("C:/Fall2020_Lastsemester/EcologicalFocasting/SCBI-ForestGEO-Data/tree_main_census/data/census-csv-files/scbi.stem3.csv")
+stem3 <- na.omit(stem3)
+```
+
+```{r}
+
+# First distribution
+hist(stem1$dbh, breaks=100, ylim = c(0,30000),col=rgb(1,0,0,0.5), xlab="dbh", 
+     ylab="frequency", main="distribution of dbh of trees measured in first 2 censuses" )
+
+# Second with add=T to plot on top
+hist(stem2$dbh, breaks=100, ylim = c(0,30000), col=rgb(0,0,1,0.5), add=T)
+
+# Add legend
+legend("topright", legend=c("Census 1: 2008-2010","Census 2: 2013"),
+       col=c(rgb(1,0,0,0.5),rgb(0,0,1,0.5)),
+       pt.cex=2, pch=15)
+
+```
+
