@@ -32,6 +32,7 @@ avg_dbh<-stem %>%
 View(avg_dbh)
 ```
 
+#barplot
 ```{r}
 ggplot(avg_dbh,aes(x = factor(sp), y=avg_dbh)) +
   geom_bar(stat='identity',
