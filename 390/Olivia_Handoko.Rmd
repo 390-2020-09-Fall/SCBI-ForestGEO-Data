@@ -285,7 +285,7 @@ total_notalive <- rbind(new_scbi_stem2_notalive, new_scbi_stem1_notalive, new_sc
 
 ```{r}
 ggplot(total_alive) + 
-  geom_line(aes(x=date, y=dbh, group = interaction(treeID, StemTag, quadrat), color = quadrat)) + facet_wrap(~quadrat)
+  geom_line(aes(x=date, y=dbh, group = interaction(treeID, StemTag), color = quadrat)) + facet_wrap(~quadrat)
 
 
 
