@@ -122,6 +122,7 @@ new_scbi_stem3_alive <-scbi_stem3_alive %>%
 ```{r}
 #bind the alive and not alive data together 
 ##
+<<<<<<< HEAD
 total_alive <- rbind(new_scbi_stem1_alive, new_scbi_stem2_alive)  %>% 
   select("sp", "quadrat", "dbh", "ExactDate","date","quadrat", "treeID", "StemTag", "tag", "MeasureID") %>%
 filter(!dbh %in% c(0, "NULL"))   %>%
@@ -129,6 +130,13 @@ filter(StemTag != 10) %>%
  group_by(treeID, StemTag) 
 #%>%
 #filter(n() >= 2 )
+=======
+total_alive <- rbind(new_scbi_stem1_alive, new_scbi_stem2_alivex) %>% select("sp", "quadrat", "dbh", "ExactDate","date","quadrat", "treeID", "StemTag", "tag", "MeasureID") %>%
+  filter(!dbh %in% c(0, "NULL"))  %>%
+  filter(StemTag != 10) %>%
+  group_by(treeID, StemTag) %>%
+  filter(n() >= 2 ) 
+>>>>>>> 6eb18e95a9fe967dbb266db5a13589acfecb89f3
 #I want tree ID and StemTag frequency to be more than just one for ST and 3 for treeID
 
    #filter(!treeID %in% c(3,13,14,15,18,35,40,42,53,56,58,67,68,87,105,110,189,191,200,201,209,213,214,219,222,230,234,236,251,253,258,259,260,262,269,272,274,276,280,281,282,287,288,289,290,297))
