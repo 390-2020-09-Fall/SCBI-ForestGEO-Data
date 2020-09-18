@@ -252,15 +252,17 @@ new_scbi_stem3_notalive <- scbi_stem3_notalive %>%
 
 new_scbi_stem3_alive <-scbi_stem3_alive %>%
   filter(sp %in% c( "libe")) %>%
-  filter(StemTag %in% c(1,2)) %>%
-  filter(quadrat <=2000)
+  #filter(StemTag %in% c(1,2)) %>%
+  filter(quadrat <=300 | quadrat >= 1000) %>%
+  filter(treeID <= 300)
+
 #new_scbi_stem3_alive <-new_scbi_stem3_alive[!duplicated(new_scbi_stem3_alive$tag), ]
 ```
 
 ```{r}
 #bind the alive and not alive data together 
 ##
-total_alive <- rbind(new_scbi_stem1_alive, new_scbi_stem2_alive) %>% select("sp", "quadrat", "dbh", "ExactDate","date","quadrat", "treeID", "StemTag", "tag", "MeasureID") %>%
+total_alive <- rbind(new_scbi_stem1_alive, new_scbi_stem2_alivex) %>% select("sp", "quadrat", "dbh", "ExactDate","date","quadrat", "treeID", "StemTag", "tag", "MeasureID") %>%
   filter(!dbh %in% c(0, "NULL"))  %>%
   filter(StemTag != 10) %>%
   group_by(treeID, StemTag) %>%
