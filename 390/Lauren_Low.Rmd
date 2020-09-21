@@ -1,0 +1,43 @@
+---
+title: "census visualization"
+author: "Lauren Low"
+date: "September 16, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(tsibble)
+library(lubridate)
+library(fpp3)
+```
+
+```{r loading csv and creating census table}
+stem1 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
+stem2 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
+stem3 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
+
+stems <- rbind(stem1, stem2, stem3)
+```
+
+```{r cleaning up/wrangling tree census data}
+ stems <- stems %>%
+  filter(dbh != "NULL") %>% 
+  na.omit(stems) %>%
+  mutate(dbh = as.numeric(dbh))
+```
+
+```{r plotting avg_dbh over time}
+ggplot(data = stems, aes(dbh)) +
+  geom_histogram() +
+  stat_bin(bins = 15) +
+  labs(title = "Distrubution of Tree Diameters at the Smithsonian Conservation Biology \n Institute (SCBI) in Font Royal, VA ",
+       x = "Diameter at Breast Height (DBH)",
+       y= "Number of Trees") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
