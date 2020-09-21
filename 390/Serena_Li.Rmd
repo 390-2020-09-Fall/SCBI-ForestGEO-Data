@@ -19,7 +19,7 @@ library(readr)
 ```
 
 ```{r}
-stem <- read.csv("scbi.stem1.csv")
+stem <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
 ```
 
 ```{r}
@@ -29,14 +29,12 @@ avg_dbh<-stem %>%
   group_by(sp) %>% 
   mutate(count=n(),
            avg_dbh=sum(dbh_num/count))
-View(avg_dbh)
 ```
 
 #barplot
 ```{r}
-ggplot(avg_dbh,aes(x = factor(sp), y=avg_dbh)) +
-  geom_bar(stat='identity',
-           position=position_dodge())+coord_flip()
+ggplot(avg_dbh,aes(x = sp, y=avg_dbh)) +
+  geom_boxplot()+coord_flip()
 ```
 
 
