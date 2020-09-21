@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ```{r}
@@ -57,13 +57,13 @@ dbh_diff <- dbh_diff %>%
 
 ggplot(dbh_diff, aes(dbh_diff)) +
   geom_histogram(binwidth = 5) +
-  ggtitle("Difference in diameter at breast height per stem between 2013-2018") +
-  xlab("Difference (cm)")
+  ggtitle("Growth in diameter at breast height per stem between 2013-2018") +
+  xlab("Growth (cm)")
 
 ggplot(dbh_diff, aes(dbh_diff)) +
   geom_boxplot(width = 0.1)  +
-  ggtitle("Difference in diameter at breast height per stem between 2013-2018") +
-  xlab("Difference (cm)") + 
+  ggtitle("Growth in diameter at breast height per stem between 2013-2018") +
+  xlab("Growth (cm)") + 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
 ```
