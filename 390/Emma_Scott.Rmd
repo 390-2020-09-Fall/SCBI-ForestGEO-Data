@@ -62,7 +62,7 @@ dbh_overlay_viz <- ggplot(stem_spp, aes(x = dbh, color = Census)) +
 dbh_overlay_viz
 ```
 ```{r, dbh + genus facet viz}
-dbh_genus_viz <- dbh_viz + 
+dbh_genus_viz <- dbh_overlay_viz + 
   facet_wrap(~Genus) +
   ggtitle("Distribution of DBH at SCBI-ForestGeo site across census years by genus")
   
