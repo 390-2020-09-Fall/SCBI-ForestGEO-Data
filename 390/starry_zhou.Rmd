@@ -42,14 +42,14 @@ facet_labels <- c(`1` = "Census 1 in 2008-2010", `2` = "Census 2 in 2013", `3` =
 alive %>% ggplot(aes(dbh)) +
   geom_histogram() +
   facet_wrap(~CensusID, labeller = labeller(CensusID = facet_labels)) +
-  labs(x = "Diameter at breast height (dbh)", y = "number of trees", 
-       title = "Histogram of tree heights", 
+  labs(x = "Diameter at breast height (dbh), unit: centimeter", y = "number of trees", 
+       title = "Histogram of dbh of trees in census", 
        subtitle = "(for alive trees only)")
 
 other %>% ggplot(aes(dbh)) +
   geom_histogram() +
   facet_wrap(~CensusID, labeller = labeller(CensusID = facet_labels)) +
-  labs(x = "Diameter at breast height (dbh)", y = "number of trees", 
-       title = "Histogram of tree heights", 
+  labs(x = "Diameter at breast height (dbh), unit: centimeter", y = "number of trees", 
+       title = "Histogram of dbh of trees in census", 
        subtitle = "(for non-alive trees)")
 ```
