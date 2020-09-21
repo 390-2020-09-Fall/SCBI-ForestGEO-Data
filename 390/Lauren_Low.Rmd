@@ -16,25 +16,28 @@ library(fpp3)
 ```
 
 ```{r loading csv and creating census table}
-urlfile1 = "https://raw.githubusercontent.com/390-2020-09-Fall/SCBI-ForestGEO-Data/master/tree_main_census/data/census-csv-files/scbi.stem1.csv"
-urlfile2 = "https://raw.githubusercontent.com/390-2020-09-Fall/SCBI-ForestGEO-Data/master/tree_main_census/data/census-csv-files/scbi.stem2.csv"
-urlfile3 = "https://raw.githubusercontent.com/390-2020-09-Fall/SCBI-ForestGEO-Data/master/tree_main_census/data/census-csv-files/scbi.stem3.csv"
+stem1 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
+stem2 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
+stem3 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
 
-stem1 <- read_csv(url(urlfile1))
-stem2 <- read_csv(url(urlfile2))
-# stem3 <- read_csv(url(urlfile3))
-
-stems <- rbind(stem1, stem2)
+stems <- rbind(stem1, stem2, stem3)
 ```
 
 ```{r cleaning up/wrangling tree census data}
  stems <- stems %>%
+  filter(dbh != "NULL") %>% 
   na.omit(stems) %>%
-  mutate(as.numeric(dbh))
+  mutate(dbh = as.numeric(dbh))
 ```
 
 ```{r plotting avg_dbh over time}
 ggplot(data = stems, aes(dbh)) +
   geom_histogram() +
-  facet_wrap(~CensusID)
+  stat_bin(bins = 15) +
+  labs(title = "Distrubution of Tree Diameters at the Smithsonian Conservation Biology \n Institute (SCBI) in Font Royal, VA ",
+       x = "Diameter at Breast Height (DBH)",
+       y= "Number of Trees") +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
+
+
