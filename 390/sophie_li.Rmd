@@ -1,0 +1,70 @@
+---
+title: "MP2 Visualization"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+stem_1 <- read_csv("../tree_main_census/data/census-csv-files/scbi.stem1.csv")
+stem_2 <- read_csv("../tree_main_census/data/census-csv-files/scbi.stem2.csv")
+stem_3 <- read_csv("../tree_main_census/data/census-csv-files/scbi.stem3.csv")
+spptable <- read_csv("../tree_main_census/data/census-csv-files/scbi.spptable.csv")
+
+full_data <- rbind(stem_1, stem_2, stem_3) %>%
+  mutate(ExactDate = lubridate::mdy(ExactDate),
+         year_month = lubridate::floor_date(ExactDate, "month"))
+```
+
+
+```{r}
+# checking NA distribution
+table(full_data$CensusID, is.na(as.numeric(full_data$dbh)))
+
+# checking date distribution
+table(full_data$CensusID, is.na(full_data$ExactDate))
+
+full_data %>% 
+  filter(!is.na(ExactDate)) %>% 
+  group_by(CensusID) %>% 
+  summarize(min_date = min(ExactDate),
+            max_date = max(ExactDate))
+
+# subsetting 2013 and 2018 data to plot 5-year difference
+dbh_diff <- stem_2 %>% 
+  rename(dbh_13 = dbh) %>% 
+  left_join(stem_3, by = c("treeID", "stemID", "sp")) %>% 
+  mutate(dbh_13 = as.numeric(dbh_13),
+         dbh_18 = as.numeric(dbh)) %>% 
+  filter(!is.na(dbh_13), !is.na(dbh_18), status.y == "A") %>% # filter for trees that are alive
+  group_by(treeID, stemID, sp) %>% 
+  summarize(dbh_diff = dbh_18 - dbh_13)
+  
+dbh_diff <- dbh_diff %>% 
+  left_join(spptable, by = c("sp")) %>% 
+  select(treeID, stemID, Family, dbh_diff)
+  
+```
+
+```{r}
+# Histogram and box plot
+
+ggplot(dbh_diff, aes(dbh_diff)) +
+  geom_histogram(binwidth = 5) +
+  ggtitle("Growth in diameter at breast height per stem between 2013-2018") +
+  xlab("Growth (cm)")
+
+ggplot(dbh_diff, aes(dbh_diff)) +
+  geom_boxplot(width = 0.1)  +
+  ggtitle("Growth in diameter at breast height per stem between 2013-2018") +
+  xlab("Growth (cm)") + 
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+```
+
