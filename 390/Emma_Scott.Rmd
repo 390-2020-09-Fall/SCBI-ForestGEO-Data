@@ -63,7 +63,7 @@ dbh_overlay_viz
 ```
 ```{r, dbh + genus facet viz, fig.height=20}
 dbh_genus_viz <- dbh_overlay_viz + 
-  facet_wrap(~Genus) +
+  facet_wrap(~Genus, scales = "free", ncol = 3) +
   ggtitle("Distribution of DBH at SCBI-ForestGeo site across census years by genus")
   
 dbh_genus_viz
