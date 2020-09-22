@@ -1,0 +1,32 @@
+---
+title: "MP2 Viz"
+author: "Serena Li"
+date: "9/15/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tsibble)
+library(lubridate)
+library(fpp3)
+library(dplyr)
+library(readr)
+
+```
+
+```{r}
+stem <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
+```
+
+#barplot
+```{r, fig.height = 10}
+ggplot(stem,aes(x = sp, y=dbh)) +
+  geom_boxplot()+
+  coord_flip()+
+  labs(x = "diameter at breast height", y = "Species", title = "The relationship between species and DBH")
+```
