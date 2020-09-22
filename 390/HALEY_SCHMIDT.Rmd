@@ -11,9 +11,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(readr)
-scbi_stem1 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
-scbi_stem2 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
-scbi_stem3 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem3.csv")
+setwd("tree_main_census/data/census-csv-files/")
+scbi_stem1 <- read_csv("scbi.stem1.csv")
+scbi_stem2 <- read_csv("scbi.stem2.csv")
+scbi_stem3 <- read_csv("scbi.stem3.csv")
+scbi_spptable <- read_csv("scbi.spptable.csv")
 ```
 
 ```{r}
