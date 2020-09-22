@@ -1,0 +1,70 @@
+---
+title: "MP2"
+author: "Emma Scott"
+date: "September 15, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load libraries
+library(tidyverse)
+library(here)
+```
+
+```{r data wrangling}
+# Load data
+spptable <- here::here("tree_main_census/data/census-csv-files/scbi.spptable.csv") %>% 
+  read_csv()
+stem1 <- here::here("tree_main_census/data/census-csv-files/scbi.stem1.csv") %>% 
+  read_csv()
+stem2 <- here::here("tree_main_census/data/census-csv-files/scbi.stem2.csv") %>% 
+  read_csv() 
+stem3 <- here::here("tree_main_census/data/census-csv-files/scbi.stem3.csv") %>% 
+  read_csv() %>% 
+  filter(dbh != "NULL") %>% 
+  mutate(dbh = as.numeric(dbh))
+treecoord <- here::here("tree_main_census/data/census-csv-files/tree_coord_local_and_plot_level.csv") %>% 
+  read_csv()
+
+# Combine all three census tables 
+stem <- rbind(stem1, stem2, stem3) %>% 
+  drop_na(dbh) %>% 
+  mutate(dbh = as.numeric(dbh),
+         CensusID = as.factor(CensusID),
+         Census = case_when(CensusID == 1 ~ "2008-2010",
+                                   CensusID == 2 ~ "2013",
+                                   CensusID == 3 ~ "2018")
+         ) %>% 
+  dplyr::filter(dbh > 0)
+
+# Join stem and spp tables
+stem_spp <- left_join(stem, spptable, by = "sp")
+```
+
+```{r dbh facet viz}
+dbh_facet_viz <- ggplot(stem_spp, aes(x = dbh)) +
+  geom_histogram(position = "identity", binwidth = 125) +
+  xlab("Diameter at Breast Height (DBH)") +
+  ylab("Count") +
+  ggtitle("Distribution of DBH at SCBI-ForestGeo site across census years") + 
+  facet_wrap(~Census)
+dbh_facet_viz
+```
+
+```{r dbh overlay viz}
+dbh_overlay_viz <- ggplot(stem_spp, aes(x = dbh, color = Census)) +
+  geom_freqpoly(position = "identity", binwidth = 125) +
+  xlab("Diameter at Breast Height (DBH)") +
+  ylab("Count") +
+  ggtitle("Distribution of DBH at SCBI-ForestGeo site across census years")
+dbh_overlay_viz
+```
+```{r, dbh + genus facet viz, fig.height=20}
+dbh_genus_viz <- dbh_overlay_viz + 
+  facet_wrap(~Genus, scales = "free", ncol = 3) +
+  ggtitle("Distribution of DBH at SCBI-ForestGeo site across census years by genus")
+  
+dbh_genus_viz
+```
