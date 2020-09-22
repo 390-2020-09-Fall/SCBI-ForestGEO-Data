@@ -18,11 +18,11 @@ library(dplyr)
 
 ```{r, echo = FALSE, warning=FALSE}
 # Load data and remove NA values
-stem1 <- read_csv("C:/Fall2020_Lastsemester/EcologicalFocasting/SCBI-ForestGEO-Data/tree_main_census/data/census-csv-files/scbi.stem1.csv")
+stem1 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
 stem1 <- na.omit(stem1)
-stem2 <- read_csv("C:/Fall2020_Lastsemester/EcologicalFocasting/SCBI-ForestGEO-Data/tree_main_census/data/census-csv-files/scbi.stem2.csv")
+stem2 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
 stem2 <- na.omit(stem2)
-stem3 <- read_csv("C:/Fall2020_Lastsemester/EcologicalFocasting/SCBI-ForestGEO-Data/tree_main_census/data/census-csv-files/scbi.stem3.csv")
+stem3 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem3.csv")
 stem3 <- na.omit(stem3)
 ```
 
