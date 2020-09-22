@@ -24,7 +24,7 @@ stem <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
 ```
 
 #barplot
-```{r}
+```{r, fig.height = 10}
 ggplot(stem,aes(x = sp, y=dbh)) +
   geom_boxplot()+coord_flip()
 ```
