@@ -12,8 +12,6 @@ same tree specie in different cooradinates, how does their dbh differ/if they ar
 See in each scbi_stem data to see which trees are the least and most for 
 - maybe pinpoint a place in the scatterplot or linegraph where the changes are if there is thatmightve affected in the timeline the die off of these trees 
   - consider stem dead and broken below
-
-#notes in code to help choose which trees I guess 
 ```{r}
 #libaries
 library(dplyr)
@@ -27,14 +25,12 @@ library(lubridate)
 ```
 
 ```{r}
-stem3 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem3.csv")
-stem2<- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
-stem1<- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
+scbi_stem3 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem3.csv")
+scbi_stem2<- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
+scbi_stem1<- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
 ```
 
 ```{r}
-#do same as above but for scbi_stem data 2 (year 2013)
-#filtered out  df status prior and missing
 scbi_stem2_notalive <- scbi_stem2 %>%
   filter(DFstatus != "alive" & 
            DFstatus != "prior" & 
@@ -51,8 +47,6 @@ scbi_stem2_alive <- scbi_stem2  %>%
 
 
 ```{r}
-#do same as above but for scbi_stem data 1 (year 2008)
-#filtered out  df status prior and missing
 scbi_stem1_notalive <- scbi_stem1 %>%
   filter(DFstatus != "alive" & 
            DFstatus != "prior" & 
@@ -72,18 +66,13 @@ ________________________________________________________________________________
 new_scbi_stem1_notalive <- scbi_stem1_notalive %>% 
     filter(sp %in% c("libe")) 
 
-#  filter(StemTag %in% c(1,2)) %>%
   
 new_scbi_stem1_notalive <-new_scbi_stem1_notalive[duplicated(new_scbi_stem1_notalive$tag), ]
 new_scbi_stem1_notalive <-new_scbi_stem1_notalive[duplicated(new_scbi_stem1_notalive$treeID), ]
 
-# new_scbi_stem1_notalive <- new_scbi_stem1_notalive[order(as.Date(new_scbi_stem1_notalive$ExactDate, format="%m/%d/%Y")),]
-
-#summarise(group_by(new_scbi_stem1_notalive,sp),length(sp))
 
 new_scbi_stem1_alive <-scbi_stem1_alive %>%
   filter(sp %in% c("libe")) %>%
-#  filter(StemTag %in% c(1,2)) %>%
   filter(quadrat <=300 | 
          quadrat >= 1000) %>%
   filter(treeID <= 300)
@@ -91,20 +80,14 @@ new_scbi_stem1_alive <-scbi_stem1_alive %>%
 new_scbi_stem1_alive <-new_scbi_stem1_alive[duplicated(new_scbi_stem1_alive$tag), ]
 new_scbi_stem1_alive <-new_scbi_stem1_alive[duplicated(new_scbi_stem1_alive$treeID), ]
 
-# new_scbi_stem1_alive <- new_scbi_stem1_alive[order(as.Date(new_scbi_stem1_alive$ExactDate, format="%m/%d/%Y")),]
-
-#summarise(group_by(new_scbi_stem1_alive,sp),length(sp))
 
 new_scbi_stem2_notalive <- scbi_stem2_notalive %>% 
     filter(sp %in% c("libe")) %>%
     filter(!dbh == 0)
- #   filter(StemTag %in% c(1,2)) %>%
-
 
 
 new_scbi_stem2_alive <-scbi_stem2_alive %>%
   filter(sp %in% c( "libe")) %>%
- # filter(StemTag %in% c(1,2)) %>%
   filter(quadrat <=300 | 
          quadrat >= 1000) %>%
   filter(treeID <= 300)
@@ -113,7 +96,6 @@ new_scbi_stem2_alive <-scbi_stem2_alive %>%
 new_scbi_stem2_alive <-new_scbi_stem2_alive[duplicated(new_scbi_stem2_alive$tag), ]
 new_scbi_stem2_alive <-new_scbi_stem2_alive[duplicated(new_scbi_stem2_alive$treeID), ]
 
-# new_scbi_stem2_alive <- new_scbi_stem2_alive[order(as.Date(new_scbi_stem2_alive$ExactDate, format="%m/%d/%Y")),]
 
 new_scbi_stem3_notalive <- scbi_stem3_notalive %>% 
     filter(sp %in% c("libe")) %>%
@@ -122,9 +104,6 @@ new_scbi_stem3_notalive <- scbi_stem3_notalive %>%
            DFstatus != "missing" & 
            dbh != "NULL") 
 
- # filter(StemTag %in% c(1,2)) %>%
-
-
 new_scbi_stem3_alive <-scbi_stem3_alive %>%
   filter(sp %in% c( "libe")) %>%
   #filter(StemTag %in% c(1,2)) %>%
@@ -132,12 +111,10 @@ new_scbi_stem3_alive <-scbi_stem3_alive %>%
          quadrat >= 1000) %>%
   filter(treeID <= 300)
 
-#new_scbi_stem3_alive <-new_scbi_stem3_alive[!duplicated(new_scbi_stem3_alive$tag), ]
 ```
 
 ```{r}
 #bind the alive and not alive data together 
-##
 total_alive <- rbind(new_scbi_stem1_alive, new_scbi_stem2_alive)  %>% 
   select("sp", "quadrat", "dbh", "ExactDate","date",
          "quadrat", "treeID", "StemTag", "tag",   "MeasureID") %>%
