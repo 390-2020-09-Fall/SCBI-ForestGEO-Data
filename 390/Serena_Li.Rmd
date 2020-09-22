@@ -16,25 +16,15 @@ library(lubridate)
 library(fpp3)
 library(dplyr)
 library(readr)
+
 ```
 
 ```{r}
 stem <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
 ```
 
-```{r}
-avg_dbh<-stem %>% 
-  filter(!is.na(dbh),!is.na(sp)) %>% 
-  mutate(dbh_num=as.numeric(as.character(dbh))) %>% 
-  group_by(sp) %>% 
-  mutate(count=n(),
-           avg_dbh=sum(dbh_num/count))
-```
-
 #barplot
 ```{r}
-ggplot(avg_dbh,aes(x = sp, y=avg_dbh)) +
+ggplot(stem,aes(x = sp, y=dbh)) +
   geom_boxplot()+coord_flip()
 ```
-
-
