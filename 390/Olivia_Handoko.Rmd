@@ -182,39 +182,3 @@ ggplot(total_alive) +
   facet_wrap(~quadrat) 
 ```
 
-#below this is just extra graphs 
-```{r}
-ggplot(new_scbi_stem1_notalive) + 
-  geom_point(aes(x=date, y=dbh, 
-                 group = treeID, 
-                 color = quadrat)) 
-```
-
-```{r}
-ggplot(new_scbi_stem2_notalive) + 
-  geom_point(aes(x=date, y=dbh, 
-                 group = treeID, 
-                 color = quadrat))
-```
-
-
-```{r}
-ggplot(new_scbi_stem3_notalive) + 
-  geom_point(aes(x=date, y=dbh, 
-                 group = treeID, 
-                 color = quadrat)) 
-```
-
-```{r}
-ggplot(total_notalive) + 
-  geom_point(aes(x=date, y=dbh, 
-                 group = treeID, 
-                 color = quadrat)) 
-```
-Honestly, this looked way better in my head. I chose to just focus on libe and see if libes placed in different quadrants would impact its growth or if they were more likely to die there (and when), considering tree ID and Stem Tag so that I can differentiate them from like a libe with the same StemTag but different TreeID to match with data from the later years with HOPEFULLY the same tree.  I chose qudrants from the lowest to the highest and not considering anything in between because the lines were getting too intense for the alive libe trees and I thought it'd be a good contrast to see clearly.
-Maybe from this we can find average dbh of libes dead and in which quadrat that this mostly likely happens in. Maybe you can also find how the seasons affect this too. 
-Like maybe libe in a certain quadrat do well in one season but not so much in another
-
-The above r code, I didn't really use all of them I think. I had an idea and then I started running them then realized problems and then my idea completely changed 360 problem after problem and then I ended up here. 
-
-Also, weird. I'm looking at the first graph and some of the dbh went down. In what case would that happen? Like a tree can grow smaller? I also checked to see if it was a r code mistake but I'm looking at treeID 263 and StemTag 9 and it does go down over the years by .6
