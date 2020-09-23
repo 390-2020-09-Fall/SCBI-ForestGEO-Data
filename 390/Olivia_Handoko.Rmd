@@ -25,9 +25,9 @@ library(lubridate)
 ```
 
 ```{r}
-scbi_stem3 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem3.csv")
-scbi_stem2<- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
-scbi_stem1<- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
+scbi_stem3 <- read.csv("tree_main_census/data/census-csv-files/scbi.stem3.csv")
+scbi_stem2<- read.csv("tree_main_census/data/census-csv-files/scbi.stem2.csv")
+scbi_stem1<- read.csv("tree_main_census/data/census-csv-files/scbi.stem1.csv")
 ```
 
 ```{r}
