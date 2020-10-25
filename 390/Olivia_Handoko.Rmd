@@ -157,10 +157,13 @@ total_notalive <- rbind(new_scbi_stem2_notalive,
 
 ```{r}
 total_alive <- total_alive %>%
-   mutate(date = mdy(ExactDate))
+   mutate(date = mdy(ExactDate))%>%
+  mutate(dbh = as.numeric(dbh))
 
 total_notalive <- total_notalive %>%
-   mutate(date = mdy(ExactDate))
+   mutate(date = mdy(ExactDate)) %>%
+  mutate(dbh = as.numeric(dbh))
+  
 ```
 
 ```{r}
