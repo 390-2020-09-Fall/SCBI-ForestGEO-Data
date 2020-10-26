@@ -1,0 +1,250 @@
+---
+title: "EMMA_KING"
+author: "Emma King"
+date: "9/22/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidyr)
+library(tsibble)
+library(lubridate)
+library(fpp3)
+library(ggplot2)
+```
+
+```{r}
+library(readr)
+
+tree_ecology <- read_csv("species_lists/Tree ecology/SCBI_ForestGEO_sp_ecology.csv")
+
+treecensus_2018 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem3.csv", 
+    col_types = cols(ExactDate = col_date(format = "%m/%d/%Y"), 
+        dbh = col_double(), hom = col_double()))
+
+treecensus_2013 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem2.csv", 
+    col_types = cols(ExactDate = col_date(format = "%m/%d/%Y")))
+
+treecensus_2008 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.csv", 
+    col_types = cols(ExactDate = col_date(format = "%m/%d/%Y")))
+```
+
+```{r}
+censusJoin <- tree_ecology %>%
+  filter(live_form == "tree") %>%
+  select(sp = spcode, canopy_position, drought_tolerance) %>%
+  full_join(treecensus_2008, by = "sp") %>%
+  filter(!is.na(dbh)) %>%
+  filter(!is.na(canopy_position)) %>%
+  filter(status == "A") %>%
+  left_join(treecensus_2013, by = c("sp", "treeID", "tag", "quadrat", "gx", "gy")) %>%
+  mutate(same = ifelse(stemID.x == stemID.y, TRUE, FALSE)) %>%
+  filter(!(same == FALSE)) %>%
+  select(-stemID.y, -StemTag.y, -same) %>%
+  rename(stemID = stemID.x, StemTag = StemTag.x) %>%
+  left_join(treecensus_2018, by = c("sp", "treeID", "tag", "quadrat", "gx", "gy")) %>%
+  mutate(same = ifelse(stemID.x == stemID.y, TRUE, FALSE)) %>%
+  filter(!(same == FALSE)) %>%
+  select(-stemID.y, -StemTag.y, -same) %>%
+  rename(stemID = stemID.x, StemTag = StemTag.x) %>%
+  select(treeID, tag, stemID, StemTag, sp, canopy_position, drought_tolerance, quadrat, gx, gy, 
+         dbh2008 = dbh.x, hom2008 = hom.x, date2008 = ExactDate.x, status2008 = status.x,
+         dbh2013 = dbh.y, hom2013 = hom.y, date2013 = ExactDate.y, status2013 = status.y,
+         dbh2018 = dbh, hom2018 = hom, date2018 = ExactDate, status2018 = status) %>%
+  filter(status2018 == "A" & status2013 == "A") %>%
+  select(-status2008, -status2013, -status2018)
+
+censusJoin %>%
+  head(10)
+```
+
+
+```
+treecensus_2008 %>%
+  filter(!is.na(dbh)) %>%
+  group_by(sp) %>%
+  summarise(n())
+```
+
+```{r}
+library(rgdal)
+library(raster)
+library(elevatr) 
+library(dynatopmodel) 
+
+#1 Define an empty raster to match plot dimensions
+ext <- extent(747370.6, 747785.8, 4308505.5, 4309154.8) #these come from the grid shapefile and represent the tilted plot
+xy <- abs(apply(as.matrix(bbox(ext)), 1, diff))
+n <- 5
+r <- raster(ext, ncol=xy[1]*n, nrow=xy[2]*n)
+proj4string(r) <- CRS("+proj=utm +zone=17 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
+#2 Get elevation raster from online
+q <- get_elev_raster(r, z=14)
+#3 Crop online raster to the dimensions of the empty raster, set resolution to 5m
+r <- raster(ext, res = 5)
+q <- resample(q, r)
+res(q)
+proj4string(q) <- CRS("+proj=utm +zone=17 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0") #q lost its crs in the resample function
+plot(q)
+
+#4 Get hydrological features of landscape (upslope area and topographical wetness index)
+##graphing parameters comes from help text from build_layers
+layers <- build_layers(q)
+sp::plot(layers, main=c("Elevation AMSL (m)", "Upslope area (log(m^2/m))", "TWI ((log(m^2/m))"))
+
+#5 Add map of plot quadrats with 20m resolution
+r <- raster(ext, res = 20)
+layers@layers[[4]] <- resample(layers@layers[[3]], r)
+sp::plot(layers, main=c("Elevation masl", "Upslope area (log(m^2/m))", "TWI ((log(m^2/m))", "TWI per quadrat"))
+#6 write TWI plot map to file
+
+titles <- c("Elevation masl", "Upslope area (log(m^2/m))", "TWI ((log(m^2/m))", "TWI per quadrat")
+files <- c("plot_elevation", "plot_upslope", "plot_TWI", "plot_TWI_quadrat")
+
+NAD83.SW <- c(747385.521, 4308506.438)                     
+NAD83.NW <- c(747370.676, 4309146.156)
+
+Offset <- atan2(NAD83.NW[1] - NAD83.SW[1], NAD83.NW[2] - NAD83.SW[2])
+
+grid2nad83 <- function(x, y) {
+  NAD83.X <- NAD83.SW[1] + (x*cos(Offset) + y*sin(Offset))
+  NAD83.Y <- NAD83.SW[2] + (-x*sin(Offset) + y*cos(Offset))
+  nad83 <- list(NAD83.X, NAD83.Y)
+  names(nad83) <- c("NAD83_X", "NAD83_Y")
+  nad83
+}
+
+censusJoin <- data.frame(censusJoin, grid2nad83(censusJoin$gx, censusJoin$gy))
+censusJoin_XY <- censusJoin %>% dplyr::select(NAD83_X, NAD83_Y)
+
+grid <- readOGR(dsn = "spatial_data/shapefiles", layer = "20m_grid")
+
+w <- mask(layers[[3]], grid) #clips raster to grid polygon
+#plot(w)
+#plot(grid, add=TRUE)
+#points(censusJoin$NAD83_X, censusJoin$NAD83_Y)
+
+twi_values <- raster::extract(layers[[3]], censusJoin_XY, method="simple") 
+
+censusJoin$TWI <- twi_values
+```
+
+```{r}
+censusJoin_diff <- censusJoin %>%
+  mutate(diffdbh_0813 = dbh2013 - dbh2008,
+         diffdbh_1318 = dbh2018 - dbh2013) %>%
+  filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>% #might change
+  filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) #might change
+
+censusJoin_diffUnderstory <- censusJoin_diff %>%
+  filter(canopy_position == "understory") %>%
+  filter(diffdbh_0813 < 20) #temporary
+```
+
+
+```{r}
+censusJoin_diff %>%
+  ggplot(aes(TWI, diffdbh_0813)) +
+  geom_point(color = "white") +
+  facet_grid(canopy_position~drought_tolerance) + 
+  stat_density2d(aes(color = ..level..), contour_var = "ndensity") +
+  scale_color_viridis_c(direction = -1)
+
+censusJoin_diff %>%
+  ggplot(aes(TWI, diffdbh_0813)) +
+  stat_density2d(aes(fill = ..level.., alpha = ..level..), 
+                 geom = "polygon", contour_var = "ndensity") + 
+  facet_grid(canopy_position~drought_tolerance) +
+  scale_alpha(range =  c(0.6, 1), guide = "none") + 
+  scale_fill_viridis_c()
+
+censusJoin_diffUnderstory %>%
+  ggplot(aes(TWI, diffdbh_0813)) +
+  geom_point(color = "white") + 
+  stat_density2d(aes(fill = ..level.., alpha = ..level..), 
+                 geom = "polygon", contour_var = "ndensity") +
+  scale_alpha(range =  c(0.6, 1), guide = "none") +
+  scale_fill_viridis_c()
+```
+
+
+```{r}
+censusJoin %>%
+  ggplot(aes(TWI)) +
+  geom_histogram(color = "white", fill = "#8789B4") +
+  facet_grid(canopy_position~drought_tolerance)
+#censusJoin %>%
+#  ggplot(aes(TWI)) +
+#  geom_histogram() +
+#  facet_wrap(drought_tolerance~sp)
+
+censusJoin %>%
+  mutate(TWI_bin = cut(TWI, 1:16)) %>%
+  #arrange(TWI_bin) %>%
+  mutate(diffdbh_0813 = dbh2013 - dbh2008,
+         diffdbh_1318 = dbh2018 - dbh2013) %>%
+  filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>%
+  filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) %>%
+  ggplot(aes(TWI_bin, diffdbh_0813)) +
+  geom_boxplot(fill = "#F0FAFF", outlier.alpha = 0.5) +
+  #geom_boxplot(fill = "#C3C5F3", outlier.shape = NA) +
+  #scale_y_continuous(limits = c(0, 55)) +
+  facet_grid(canopy_position~drought_tolerance)
+  
+```
+
+
+
+```{r}
+censusJoin %>%
+  mutate(diffdbh_0813 = dbh2013 - dbh2008,
+         diffdbh_1318 = dbh2018 - dbh2013) %>%
+  filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>%
+  filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) %>%
+  #ggplot(aes(TWI, diffdbh_0813)) +
+  #geom_point()
+  ggplot(aes(diffdbh_0813)) +
+  geom_histogram(color = "white", binwidth = 5)
+
+censusJoin %>%
+  mutate(diffdbh_0813 = dbh2013 - dbh2008,
+         diffdbh_1318 = dbh2018 - dbh2013) %>%
+  filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>%
+  filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) %>%
+  #ggplot(aes(TWI, diffdbh_0813)) +
+  #geom_point()
+  ggplot(aes(TWI)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+
+```
+censusJoin %>%
+  mutate(diffdbh_0813 = dbh2013 - dbh2008,
+         diffdbh_1318 = dbh2018 - dbh2013) %>%
+  filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>%
+  filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) %>%
+  #ggplot(aes(TWI, diffdbh_0813)) +
+  #geom_point()
+  ggplot(aes(dbh2008)) +
+  geom_histogram(color = "white", bins = 20) +
+  facet_wrap(~sp, scales = "free_y")
+
+censusJoin %>%
+  mutate(diffdbh_0813 = dbh2013 - dbh2008,
+         diffdbh_1318 = dbh2018 - dbh2013) %>%
+  filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>%
+  filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) %>%
+  #ggplot(aes(TWI, diffdbh_0813)) +
+  #geom_point()
+  ggplot(aes(TWI)) +
+  geom_histogram(color = "white", bins = 20) +
+  facet_wrap(~sp, scales = "free_y")
+
+
+#cor(censusJoin_diff$diffdbh_0813, censusJoin_diff$TWI)
+#summary(lm(formula = diffdbh_0813 ~ TWI + canopy_position, data = censusJoin_diff))
+#summary(lm(formula = diffdbh_0813 ~ TWI + drought_tolerance, data = censusJoin_diff))
+```
