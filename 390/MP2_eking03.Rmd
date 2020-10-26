@@ -15,7 +15,7 @@ library(fpp3)
 library(ggplot2)
 ```
 
-```{r}
+```{r, warning=FALSE, message=FALSE, include=FALSE}
 library(readr)
 
 tree_ecology <- read_csv("species_lists/Tree ecology/SCBI_ForestGEO_sp_ecology.csv")
@@ -32,6 +32,9 @@ treecensus_2008 <- read_csv("tree_main_census/data/census-csv-files/scbi.stem1.c
 ```
 
 ```{r}
+# creating a table that only includes individuals that were alive in all three censuses
+# the most unique identifier per row is stemID, not treeID
+
 censusJoin <- tree_ecology %>%
   filter(live_form == "tree") %>%
   select(sp = spcode, canopy_position, drought_tolerance) %>%
@@ -61,44 +64,33 @@ censusJoin %>%
 ```
 
 
-```
-treecensus_2008 %>%
-  filter(!is.na(dbh)) %>%
-  group_by(sp) %>%
-  summarise(n())
-```
+```{r, warning=FALSE, message=FALSE}
+# code borrowed from SCBI_ForestGEO_Data/R_scripts/ForestGEO_plot_map.R
+# finding the topographic wetness index (TWI) and lat/long (NAD83), then appending it to censusJoin
 
-```{r}
 library(rgdal)
 library(raster)
 library(elevatr) 
 library(dynatopmodel) 
 
-#1 Define an empty raster to match plot dimensions
-ext <- extent(747370.6, 747785.8, 4308505.5, 4309154.8) #these come from the grid shapefile and represent the tilted plot
+ext <- extent(747370.6, 747785.8, 4308505.5, 4309154.8)
 xy <- abs(apply(as.matrix(bbox(ext)), 1, diff))
 n <- 5
 r <- raster(ext, ncol=xy[1]*n, nrow=xy[2]*n)
 proj4string(r) <- CRS("+proj=utm +zone=17 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
-#2 Get elevation raster from online
+
 q <- get_elev_raster(r, z=14)
-#3 Crop online raster to the dimensions of the empty raster, set resolution to 5m
+
 r <- raster(ext, res = 5)
 q <- resample(q, r)
-res(q)
-proj4string(q) <- CRS("+proj=utm +zone=17 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0") #q lost its crs in the resample function
-plot(q)
 
-#4 Get hydrological features of landscape (upslope area and topographical wetness index)
-##graphing parameters comes from help text from build_layers
+proj4string(q) <- CRS("+proj=utm +zone=17 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
+
 layers <- build_layers(q)
-sp::plot(layers, main=c("Elevation AMSL (m)", "Upslope area (log(m^2/m))", "TWI ((log(m^2/m))"))
 
-#5 Add map of plot quadrats with 20m resolution
 r <- raster(ext, res = 20)
 layers@layers[[4]] <- resample(layers@layers[[3]], r)
 sp::plot(layers, main=c("Elevation masl", "Upslope area (log(m^2/m))", "TWI ((log(m^2/m))", "TWI per quadrat"))
-#6 write TWI plot map to file
 
 titles <- c("Elevation masl", "Upslope area (log(m^2/m))", "TWI ((log(m^2/m))", "TWI per quadrat")
 files <- c("plot_elevation", "plot_upslope", "plot_TWI", "plot_TWI_quadrat")
@@ -119,104 +111,131 @@ grid2nad83 <- function(x, y) {
 censusJoin <- data.frame(censusJoin, grid2nad83(censusJoin$gx, censusJoin$gy))
 censusJoin_XY <- censusJoin %>% dplyr::select(NAD83_X, NAD83_Y)
 
-grid <- readOGR(dsn = "spatial_data/shapefiles", layer = "20m_grid")
-
-w <- mask(layers[[3]], grid) #clips raster to grid polygon
-#plot(w)
-#plot(grid, add=TRUE)
-#points(censusJoin$NAD83_X, censusJoin$NAD83_Y)
+#grid <- readOGR(dsn = "spatial_data/shapefiles", layer = "20m_grid")
+#w <- mask(layers[[3]], grid) #clips raster to grid polygon
 
 twi_values <- raster::extract(layers[[3]], censusJoin_XY, method="simple") 
 
 censusJoin$TWI <- twi_values
 ```
 
+
 ```{r}
+# adding columns that describe the change in DBH from 2008 - 2013 and 2013 - 2018
+# creating new data frame to conserve the one without data exclusions
 censusJoin_diff <- censusJoin %>%
   mutate(diffdbh_0813 = dbh2013 - dbh2008,
          diffdbh_1318 = dbh2018 - dbh2013) %>%
-  filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>% #might change
-  filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) #might change
+  # excluding values that suggest stem shrinkages (focusing only on growth)
+  filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>% 
+  # excluding large outliers that impede visual analysis
+  # might change if I figure out a way to include them more seamlessly
+  filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) 
 
+# a new data frame focused on understory species, excluding large outliers
 censusJoin_diffUnderstory <- censusJoin_diff %>%
   filter(canopy_position == "understory") %>%
-  filter(diffdbh_0813 < 20) #temporary
+  filter(diffdbh_0813 < 20) #temporary?
 ```
 
 
 ```{r}
+# density and point plot: change in DBH (2008-13) by TWI, per drought tolerance and canopy position
 censusJoin_diff %>%
   ggplot(aes(TWI, diffdbh_0813)) +
   geom_point(color = "white") +
   facet_grid(canopy_position~drought_tolerance) + 
   stat_density2d(aes(color = ..level..), contour_var = "ndensity") +
-  scale_color_viridis_c(direction = -1)
+  scale_color_viridis_c(direction = -1) +
+  xlab("Topographic Wetness Index") +
+  ylab("Change in DBH (cm) from 2008 to 2013") +
+  labs(color = "Density")
 
+# density plot: change in DBH (2008-13) by TWI, per drought tolerance and canopy position
+# excludes the raw population data (outliers)
+## while the density plot allows you to visualize trends upheld by the population's majority, the density+point plot provides information about which group has the greatest potential for change and the largest representation at extreme TWIs (namely, canopy species that are drought-resistant)
 censusJoin_diff %>%
   ggplot(aes(TWI, diffdbh_0813)) +
   stat_density2d(aes(fill = ..level.., alpha = ..level..), 
                  geom = "polygon", contour_var = "ndensity") + 
   facet_grid(canopy_position~drought_tolerance) +
   scale_alpha(range =  c(0.6, 1), guide = "none") + 
-  scale_fill_viridis_c()
+  scale_fill_viridis_c() +
+  xlab("Topographic Wetness Index") +
+  ylab("Change in DBH (cm) from 2008 to 2013") +
+  labs(fill = "Density") +
+  theme_bw()
 
+# density plot of understory: not faceted since there are no drought-intolerant understory species and included seperately since in the above graph, the lower levels for this facet have somehow been overlapped in reverse
 censusJoin_diffUnderstory %>%
   ggplot(aes(TWI, diffdbh_0813)) +
   geom_point(color = "white") + 
   stat_density2d(aes(fill = ..level.., alpha = ..level..), 
                  geom = "polygon", contour_var = "ndensity") +
   scale_alpha(range =  c(0.6, 1), guide = "none") +
-  scale_fill_viridis_c()
+  scale_fill_viridis_c() +
+  xlab("Topographic Wetness Index") +
+  ylab("Change in DBH (cm) from 2008 to 2013") +
+  labs(fill = "Density") +
+  theme_bw()
 ```
 
 
-```{r}
+```{r, message=FALSE}
+# histogram of TWI, per drought tolerance and canopy position
 censusJoin %>%
   ggplot(aes(TWI)) +
   geom_histogram(color = "white", fill = "#8789B4") +
-  facet_grid(canopy_position~drought_tolerance)
-#censusJoin %>%
-#  ggplot(aes(TWI)) +
-#  geom_histogram() +
-#  facet_wrap(drought_tolerance~sp)
+  facet_grid(canopy_position~drought_tolerance) +
+  theme_bw()
 
+# boxplot of change in DBH by Topographic Wetness Index (TWI), per drought tolerance and canopy position
 censusJoin %>%
   mutate(TWI_bin = cut(TWI, 1:16)) %>%
-  #arrange(TWI_bin) %>%
   mutate(diffdbh_0813 = dbh2013 - dbh2008,
          diffdbh_1318 = dbh2018 - dbh2013) %>%
+  # excluding values that suggest stem shrinkages
   filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>%
+  #exclusing outliers that impede visual analysis 
+  #(until I figure out a way to include them more seamlessly)
   filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) %>%
   ggplot(aes(TWI_bin, diffdbh_0813)) +
-  geom_boxplot(fill = "#F0FAFF", outlier.alpha = 0.5) +
-  #geom_boxplot(fill = "#C3C5F3", outlier.shape = NA) +
+  geom_boxplot(fill = "#C3C5F3", outlier.alpha = 0.5) +
+  # included in case I want to further truncate the visible outliers
   #scale_y_continuous(limits = c(0, 55)) +
-  facet_grid(canopy_position~drought_tolerance)
+  facet_grid(canopy_position~drought_tolerance) +
+  xlab("Topographic Wetness Index") +
+  ylab("Change in DBH (cm) from 2008 to 2013") +
+  theme_bw()
   
 ```
 
 
 
 ```{r}
+# histogram of growth distribution (2008 to 2013)
 censusJoin %>%
   mutate(diffdbh_0813 = dbh2013 - dbh2008,
          diffdbh_1318 = dbh2018 - dbh2013) %>%
   filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>%
   filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) %>%
-  #ggplot(aes(TWI, diffdbh_0813)) +
-  #geom_point()
   ggplot(aes(diffdbh_0813)) +
-  geom_histogram(color = "white", binwidth = 5)
+  geom_histogram(color = "white", binwidth = 5) +
+  xlab("Change in DBH (cm) from 2008 to 2013") +
+  ylab("Count") +
+  theme_bw()
 
+# histogram of TWI distribution
 censusJoin %>%
   mutate(diffdbh_0813 = dbh2013 - dbh2008,
          diffdbh_1318 = dbh2018 - dbh2013) %>%
   filter((diffdbh_0813 > 0) & (diffdbh_1318 > 0)) %>%
   filter((diffdbh_0813 < 100) & (diffdbh_1318 < 100)) %>%
-  #ggplot(aes(TWI, diffdbh_0813)) +
-  #geom_point()
   ggplot(aes(TWI)) +
-  geom_histogram(color = "white", bins = 20)
+  geom_histogram(color = "white", bins = 20) +
+  xlab("Topographic Wetness Index") +
+  ylab("Count") +
+  theme_bw()
 ```
 
 
