@@ -1,0 +1,31 @@
+---
+title: "390/Nidhi_Vinod"
+author: "Nidhi"
+date: "9/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+library(readr)
+
+scbi_stem1 <- read_csv("C:/Users/Me/Desktop/390_SCBI-ForestGEO-Data/tree_main_census/data/census-csv-files/scbi.stem1.csv", 
+    col_types = cols(ExactDate = col_date(format = "%m/%d/%Y"), 
+        dbh = col_number()))
+
+DBH_2008to2011<- scbi_stem1$dbh
+
+Year_2008to2011<- scbi_stem1$ExactDate
+
+plot(DBH_2008to2011,Year_2008to2011)
+
+
+
+
+
+```
+
